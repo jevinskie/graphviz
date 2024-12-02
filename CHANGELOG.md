@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   should prefer their platform’s native security solutions, but if nothing
   better is available this wrapper offers safe processing of untrusted inputs in
   some scenarios.
+- In gvpr, enable rename() builtin for nodes.
 
 ### Changed
 
