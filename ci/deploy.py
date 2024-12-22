@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -42,6 +43,16 @@ def upload(dry_run: bool, version: str, path: Path, name: Optional[str] = None) 
         f'{os.environ["CI_PROJECT_ID"]}/packages/generic/graphviz-releases/'
         f"{version}/{safe}"
     )
+
+    # do some cursory validation where possible
+    if path.suffix[1:].lower() == "zip":
+        log.info(f"+ zip --test {shlex.quote(str(path))}")
+        subprocess.check_call(["zip", "--test", path])
+    elif ".tar." in str(path):
+        log.info(f"+ tar --list --file={shlex.quote(str(path))} >/dev/null")
+        subprocess.check_call(
+            ["tar", "--list", f"--file={path}"], stdout=subprocess.DEVNULL
+        )
 
     if dry_run:
         log.info("skipping upload due to 'dry_run' flag")
