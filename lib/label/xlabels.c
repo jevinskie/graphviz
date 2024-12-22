@@ -340,7 +340,7 @@ xlintersections(XLabels_t * xlp, object_t * objp, object_t * intrsx[XLNBR])
 	return bp;
 
     for (LeafList_t *ilp = llp; ilp; ilp = ilp->next) {
-	double a, ra;
+	double a;
 	object_t *cp = ilp->leaf->data;
 
 	if (cp == objp)
@@ -350,7 +350,7 @@ xlintersections(XLabels_t * xlp, object_t * objp, object_t * intrsx[XLNBR])
 	Rect_t srect = objp2rect(cp);
 	a = aabbaabb(&rect, &srect);
 	if (a > 0.0) {
-	  ra = recordointrsx(objp, cp, &rect, a, intrsx);
+	  const double ra = recordointrsx(objp, cp, &rect, a, intrsx);
 	  bp.n++;
 	  bp.area += ra;
 	}
@@ -360,7 +360,7 @@ xlintersections(XLabels_t * xlp, object_t * objp, object_t * intrsx[XLNBR])
 	srect = objplp2rect(cp);
 	a = aabbaabb(&rect, &srect);
 	if (a > 0.0) {
-	  ra = recordlintrsx(objp, cp, &rect, a, intrsx);
+	  const double ra = recordlintrsx(objp, cp, &rect, a, intrsx);
 	  bp.n++;
 	  bp.area += ra;
 	}
