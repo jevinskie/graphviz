@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In verbose mode (`-v`) the dot layout algorithm now notes when it is entering
   each layout phase. #2540
 - **Breaking**: The `EXPANDBP` macro has been removed.
+- **Breaking**: The `EXPANDBB` macro has been removed.
 
 ### Fixed
 
