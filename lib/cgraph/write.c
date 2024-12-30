@@ -47,8 +47,8 @@ static Agsym_t *Tailport, *Headport;
 
 typedef struct {
 	uint64_t *preorder_number;	// of a graph or subgraph
-	uint64_t *node_last_written;	// postorder number of subg when node was last written`
-	 uint64_t *edge_last_written;	// postorder number of subg when edge was last written`
+	uint64_t *node_last_written;	// postorder number of subg when node was last written
+	 uint64_t *edge_last_written;	// postorder number of subg when edge was last written
 } write_info_t;
 
 static int write_body(Agraph_t *g, iochan_t *ofile, write_info_t *wr_info);
