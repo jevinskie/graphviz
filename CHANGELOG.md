@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Improved `agwrite` so it is much faster (linear not quadratic) when there are many small subgraphs. #2593
 - **Breaking**: `rank_t.cache_nc` is now a `int64_t`.
 
 ### Fixed
