@@ -41,10 +41,20 @@ static int ioput(Agraph_t * g, iochan_t * ofile, char *str)
 
 #define MAX_OUTPUTLINE		128
 #define MIN_OUTPUTLINE		 60
-static int write_body(Agraph_t * g, iochan_t * ofile);
 static int Level;
 static int Max_outputline = MAX_OUTPUTLINE;
 static Agsym_t *Tailport, *Headport;
+
+typedef struct {
+	uint64_t *preorder_number;	// of a graph or subgraph
+	uint64_t *node_last_written;	// postorder number of subg when node was last written
+	uint64_t *edge_last_written;	// postorder number of subg when edge was last written
+} write_info_t;
+
+static int write_body(Agraph_t *g, iochan_t *ofile, write_info_t *wr_info);
+
+static write_info_t before_write(Agraph_t *);
+static void after_write(Agraph_t *, write_info_t);
 
 static int indent(Agraph_t * g, iochan_t * ofile)
 {
@@ -439,36 +449,9 @@ static bool irrelevant_subgraph(Agraph_t * g)
     return true;
 }
 
-static bool node_in_subg(Agraph_t * g, Agnode_t * n)
-{
-    Agraphs_t *subgs = g_seq2(g);
-
-    for (size_t i = 0; i < Agraphs_size(subgs); ++i) {
-	Agraph_t *subg = Agraphs_get(subgs, i);
-	if (irrelevant_subgraph(subg))
-	    continue;
-	if (agsubnode(subg, n, 0))
-	    return true;
-    }
-    return false;
-}
-
 static bool has_no_edges(Agraph_t * g, Agnode_t * n)
 {
     return agfstin(g, n) == NULL && agfstout(g, n) == NULL;
-}
-
-static bool has_no_predecessor_below(Agraph_t * g, Agnode_t * n,
-				    uint64_t val)
-{
-    Agedge_t *e;
-
-    if (AGSEQ(n) < val)
-	return false;
-    for (e = agfstin(g, n); e; e = agnxtin(g, e))
-	if (AGSEQ(e->node) < val)
-	    return false;
-    return true;
 }
 
 static bool not_default_attrs(Agraph_t * g, Agnode_t * n)
@@ -486,17 +469,16 @@ static bool not_default_attrs(Agraph_t * g, Agnode_t * n)
     return false;
 }
 
-static int write_subgs(Agraph_t * g, iochan_t * ofile)
-{
+static int write_subgs(Agraph_t *g, iochan_t *ofile, write_info_t *wr_info) {
     Agraph_t *subg;
 
     for (subg = agfstsubg(g); subg; subg = agnxtsubg(subg)) {
 	if (irrelevant_subgraph(subg)) {
-	    write_subgs(subg, ofile);
+	    write_subgs(subg, ofile, wr_info);
 	}
 	else {
 	    CHKRV(write_hdr(subg, ofile, false));
-	    CHKRV(write_body(subg, ofile));
+	    CHKRV(write_body(subg, ofile, wr_info));
 	    CHKRV(write_trl(subg, ofile));
 	}
     }
@@ -590,8 +572,8 @@ static int attrs_written(void *obj)
     return AGATTRWF(obj);
 }
 
-static int write_node(Agnode_t * n, iochan_t * ofile, Dict_t * d)
-{
+static int write_node(Agraph_t *subg, Agnode_t *n, iochan_t *ofile, Dict_t *d,
+                      write_info_t *wr_info) {
     Agraph_t *g;
 
     g = agraphof(n);
@@ -599,6 +581,8 @@ static int write_node(Agnode_t * n, iochan_t * ofile, Dict_t * d)
     CHKRV(write_nodename(n, ofile));
     if (!attrs_written(n))
 	CHKRV(write_nondefault_attrs(n, ofile, d));
+    wr_info->node_last_written[AGSEQ(n)] =
+	wr_info->preorder_number[AGSEQ(subg)];
     return ioput(g, ofile, ";\n");
 }
 
@@ -606,13 +590,13 @@ static int write_node(Agnode_t * n, iochan_t * ofile, Dict_t * d)
  * a subgraph or one of its predecessors, and if it is a singleton
  * or has non-default attributes.
  */
-static bool write_node_test(Agraph_t * g, Agnode_t * n,
-			   uint64_t pred_id)
-{
-    if (has_no_predecessor_below(g, n, pred_id) && !node_in_subg(g, n)) {
-	if (has_no_edges(g, n) || not_default_attrs(g, n))
-	    return true;
-    }
+static bool write_node_test(Agraph_t *g, Agnode_t *n, write_info_t *wr_info) {
+    /* test if node was already written in g or a subgraph of g */
+    if (wr_info->node_last_written[AGSEQ(n)] >=
+	wr_info->preorder_number[AGSEQ(g)]) return false;
+
+    if (has_no_edges(g, n) || not_default_attrs(g, n))
+	return true;
     return false;
 }
 
@@ -646,22 +630,14 @@ static int write_port(Agedge_t * e, iochan_t * ofile, Agsym_t * port)
     return 0;
 }
 
-static bool write_edge_test(Agraph_t *g, Agedge_t *e) {
-    Agraphs_t *subgs = g_seq2(g);
-
-    /* can use agedge() because we subverted the dict compar_f */
-    for (size_t i = 0; i < Agraphs_size(subgs); ++i) {
-	Agraph_t *subg = Agraphs_get(subgs, i);
-	if (irrelevant_subgraph(subg))
-	    continue;
-	if (agsubedge(subg, e, 0))
-	    return false;
-    }
+static bool write_edge_test(Agraph_t *g, Agedge_t *e, write_info_t *wr_info) {
+    if (wr_info->edge_last_written[AGSEQ(e)] >=
+        wr_info->preorder_number[AGSEQ(g)]) return false;
     return true;
 }
 
-static int write_edge(Agedge_t * e, iochan_t * ofile, Dict_t * d)
-{
+static int write_edge(Agraph_t *subg, Agedge_t *e, iochan_t *ofile, Dict_t *d,
+                      write_info_t *wr_info) {
     Agnode_t *t, *h;
     Agraph_t *g;
 
@@ -679,28 +655,29 @@ static int write_edge(Agedge_t * e, iochan_t * ofile, Dict_t * d)
     } else {
 	CHKRV(write_edge_name(e, ofile, true));
     }
+    wr_info->edge_last_written[AGSEQ(e)] =
+	wr_info->preorder_number[AGSEQ(subg)];
     return ioput(g, ofile, ";\n");
 }
 
-static int write_body(Agraph_t * g, iochan_t * ofile)
-{
+static int write_body(Agraph_t *g, iochan_t *ofile, write_info_t *wr_info) {
     Agnode_t *n, *prev;
     Agedge_t *e;
     Agdatadict_t *dd;
 
-    CHKRV(write_subgs(g, ofile));
+    CHKRV(write_subgs(g, ofile, wr_info));
     dd = agdatadict(g, false);
     for (n = agfstnode(g); n; n = agnxtnode(g, n)) {
-	if (write_node_test(g, n, AGSEQ(n)))
-	    CHKRV(write_node(n, ofile, dd ? dd->dict.n : 0));
+	if (write_node_test(g, n, wr_info))
+	    CHKRV(write_node(g, n, ofile, dd ? dd->dict.n : 0, wr_info));
 	prev = n;
 	for (e = agfstout(g, n); e; e = agnxtout(g, e)) {
-	    if (prev != aghead(e) && write_node_test(g, aghead(e), AGSEQ(n))) {
-		CHKRV(write_node(aghead(e), ofile, dd ? dd->dict.n : 0));
+	    if (prev != aghead(e) && write_node_test(g, aghead(e), wr_info)) {
+		CHKRV(write_node(g, aghead(e), ofile, dd ? dd->dict.n : 0, wr_info));
 		prev = aghead(e);
 	    }
-	    if (write_edge_test(g, e))
-		CHKRV(write_edge(e, ofile, dd ? dd->dict.e : 0));
+	    if (write_edge_test(g, e, wr_info))
+		CHKRV(write_edge(g, e, ofile, dd ? dd->dict.e : 0, wr_info));
 	}
 
 	}
@@ -737,10 +714,39 @@ int agwrite(Agraph_t * g, void *ofile)
 	if ((len == 0 || len >= MIN_OUTPUTLINE) && len <= (unsigned long)INT_MAX)
 	    Max_outputline = (int)len;
     }
-    set_attrwf(g, true, false);
+    write_info_t wr_info = before_write(g);
     CHKRV(write_hdr(g, ofile, true));
-    CHKRV(write_body(g, ofile));
+    CHKRV(write_body(g, ofile, &wr_info));
     CHKRV(write_trl(g, ofile));
+    after_write(g, wr_info);
     Max_outputline = MAX_OUTPUTLINE;
     return AGDISC(g, io)->flush(ofile);
+}
+
+static uint64_t subgdfs(Agraph_t *g, uint64_t ix, write_info_t *wr_info) {
+    uint64_t ix0 = ix;
+    Agraph_t *subg;
+
+    wr_info->preorder_number[AGSEQ(g)] = ix0;
+    for (subg = agfstsubg(g); subg; subg = agnxtsubg(subg)) {
+	ix0 = subgdfs(subg, ix0, wr_info);
+    }
+    return ix0 + 1;
+}
+
+static write_info_t before_write(Agraph_t *g) {
+    write_info_t wr_info = {0};
+    set_attrwf(g, true, false);
+    
+    wr_info.preorder_number = agnnew(g, g->clos->seq[AGRAPH] + 1, uint64_t);
+    wr_info.node_last_written = agnnew(g, g->clos->seq[AGNODE] + 1, uint64_t);
+    wr_info.edge_last_written = agnnew(g, g->clos->seq[AGEDGE] + 1, uint64_t);
+    subgdfs(g, 1, &wr_info);
+    return wr_info;
+}
+
+static void after_write(Agraph_t *g, write_info_t wr_info) {
+    agfree(g, wr_info.preorder_number);
+    agfree(g, wr_info.node_last_written);
+    agfree(g, wr_info.edge_last_written);
 }
