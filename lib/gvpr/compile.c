@@ -182,14 +182,10 @@ static char *symName(Expr_t *ex, int op) {
     return gprnames[op];
   else {
     // calculate how much space we need to construct a name
-    int bytes = vsnprintf(NULL, 0, "<unknown (%d)>", op);
-    if (bytes < 0) {
-      fprintf(stderr, "%s: vsnprintf failure\n", __func__);
-      graphviz_exit(EXIT_FAILURE);
-    }
+    int bytes = 12 /* literals */ + 11 /* max # decimal digits for 32-bit int */;
 
     // construct a managed buffer to store this name
-    char *s = vmalloc(ex->ve, (size_t)bytes + 1);
+    char *s = vmalloc(ex->vm, (size_t)bytes + 1);
 
     // make the name
     if (s != NULL) {

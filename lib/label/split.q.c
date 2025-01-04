@@ -26,6 +26,10 @@ static void Classify(RTree_t * rtp, int i, int group);
 static void PickSeeds(RTree_t * rtp);
 static void GetBranches(RTree_t * rtp, Node_t * n, Branch_t * b);
 
+#if RTDEBUG
+static void PrintPVars(RTree_t * rtp);
+#endif
+
 /*-----------------------------------------------------------------------------
 | Split a node.
 | Divides the nodes branches and the extra one between two nodes.
@@ -69,7 +73,7 @@ void SplitNode(RTree_t * rtp, Node_t * n, Branch_t * b, Node_t ** nn)
     assert(n->count + (*nn)->count == NODECARD + 1);
 
 #ifdef RTDEBUG
-    PrintPVars(p);
+    // PrintPVars(p);
     fprintf(stderr, "group 0:\n");
     PrintNode(n);
     fprintf(stderr, "group 1:\n");
@@ -236,15 +240,15 @@ static void Classify(RTree_t * rtp, int i, int group)
     {
 	/* redraw entire group and its cover */
 	int j;
-	MFBSetColor(WHITE);	/* cover is white */
+	// MFBSetColor(WHITE);	/* cover is white */
 	PrintRect(&rtp->split.Partitions[0].cover[group]);
-	MFBSetColor(group + 3);	/* group 0 green, group 1 blue */
+	// MFBSetColor(group + 3);	/* group 0 green, group 1 blue */
 	for (j = 0; j < NODECARD + 1; j++) {
 	    if (rtp->split.Partitions[0].taken[j] &&
 		rtp->split.Partitions[0].partition[j] == group)
-		PrintRect(&rtrtp->split.Partitions[0].BranchBuf[j].rect);
+		PrintRect(&rtp->split.Partitions[0].cover[j]);
 	}
-	GraphChar();
+	// GraphChar();
     }
 #	endif
 }
@@ -291,7 +295,7 @@ static void InitPVars(RTree_t * rtp)
 /*-----------------------------------------------------------------------------
 | Print out data for a partition from PartitionVars struct.
 -----------------------------------------------------------------------------*/
-PrintPVars(RTree_t * rtp)
+static void PrintPVars(RTree_t * rtp)
 {
     fprintf(stderr, "\npartition:\n");
     for (size_t i = 0; i < NODECARD + 1; i++) {

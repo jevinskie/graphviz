@@ -635,7 +635,7 @@ double StressMajorizationSmoother_smooth(StressMajorizationSmoother sm, int dim,
     diff = total_distance(m, dim, x, y)/sqrt(vector_product(m*dim, x, x));
 #ifdef DEBUG_PRINT
     if (Verbose){
-      fprintf(stderr, "Outer iter = %d, cg res = %g, ||x_{k+1}-x_k||/||x_k|| = %g\n",iter, res, diff);
+      fprintf(stderr, "Outer iter = %d, cg ||x_{k+1}-x_k||/||x_k|| = %g\n",iter, diff);
     }
 #endif
 

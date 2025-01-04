@@ -149,14 +149,14 @@ static SparseMatrix get_overlap_graph(int dim, int n, double *x, double *width, 
     if (scanpointsx[i].status == INTV_OPEN){
 #ifdef DEBUG_RBTREE
       fprintf(stderr, "inserting...");
-      treey->PrintKey(&(scanpointsy[k]));
+      // treey->PrintKey(&(scanpointsy[k]));
 #endif
 
       RBTreeInsert(treey, &scanpointsy[k]); // add both open and close int for y
 
 #ifdef DEBUG_RBTREE
       fprintf(stderr, "inserting2...");
-      treey->PrintKey(&(scanpointsy[k+n]));
+      // treey->PrintKey(&(scanpointsy[k+n]));
 #endif
 
       RBTreeInsert(treey, &scanpointsy[k + n]);
@@ -172,7 +172,7 @@ static SparseMatrix get_overlap_graph(int dim, int n, double *x, double *width, 
 
 #ifdef DEBUG_RBTREE
       fprintf(stderr, "popping..%d....yinterval={%f,%f}\n", scanpointsy[k + n].node, bsta, bsto);
-      treey->PrintKey(newNode->key);
+      // treey->PrintKey(newNode->key);
 #endif
 
      assert(treey->nil != newNode);
@@ -195,7 +195,7 @@ static SparseMatrix get_overlap_graph(int dim, int n, double *x, double *width, 
 
 #ifdef DEBUG_RBTREE
       fprintf(stderr, "deleting...");
-      treey->PrintKey(newNode0->key);
+      // treey->PrintKey(newNode0->key);
 #endif
 
       if (newNode0) RBDelete(treey,newNode0);

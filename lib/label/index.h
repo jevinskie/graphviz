@@ -62,7 +62,7 @@ typedef struct LeafList {
     Leaf_t *leaf;
 } LeafList_t;
 
-    struct RTree {
+struct RTree {
     Node_t *root;
 
     SplitQ_t split;

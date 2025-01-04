@@ -1034,7 +1034,7 @@ int checkStart(graph_t * G, int nG, int dflt)
 }
 
 #ifdef DEBUG_COLA
-void dumpData(graph_t * g, vtx_data * gp, int nv, int ne)
+static void dumpData(graph_t * g, vtx_data * gp, int nv, int ne)
 {
     node_t *v;
     int i;
@@ -1075,7 +1075,8 @@ void dumpData(graph_t * g, vtx_data * gp, int nv, int ne)
 
     }
 }
-void dumpClusterData (cluster_data* dp)
+
+static void dumpClusterData (cluster_data* dp)
 {
   int i, j, sz;
 
@@ -1100,15 +1101,15 @@ void dumpClusterData (cluster_data* dp)
     fprintf (stderr, "  (%f,%f) (%f,%f)\n", bb.LL.x, bb.LL.y, bb.UR.x, bb.UR.y);
   }
 }
-void dumpOpts (ipsep_options* opp, int nv)
+
+static void dumpOpts (ipsep_options* opp, int nv)
 {
   int i;
 
   fprintf (stderr, "diredges %d edge_gap %f noverlap %d gap (%f,%f)\n", opp->diredges, opp->edge_gap, opp->noverlap, opp->gap.x, opp->gap.y);
   for (i = 0; i < nv; i++)
     fprintf (stderr, "  (%f,%f)\n", opp->nsize[i].x, opp->nsize[i].y);
-  if (opp->clusters)
-    dumpClusterData (opp->clusters);
+  dumpClusterData (&opp->clusters);
 }
 #endif
 
@@ -1213,7 +1214,7 @@ majorization(graph_t *mg, graph_t * g, int nv, int mode, int model, int dim, adj
 	    fprintf (stderr, "nv %d ne %d Ndim %d model %d MaxIter %d\n", nv, ne, Ndim, model, MaxIter);
 	    fprintf (stderr, "Nodes:\n");
 	    for (int i = 0; i < nv; i++) {
-		fprintf (stderr, "  %s (%f,%f)\n", nodes[i]->name, coords[0][i],  coords[1][i]);
+		fprintf (stderr, "  %s (%f,%f)\n", "<name n/a>" /* nodes[i]->name */, coords[0][i],  coords[1][i]);
 	    }
 	    fprintf (stderr, "\n");
 	    dumpData(g, gp, nv, ne);

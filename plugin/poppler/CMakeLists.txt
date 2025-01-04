@@ -19,10 +19,10 @@ if(PANGOCAIRO_FOUND AND POPPLER_FOUND)
     ${POPPLER_INCLUDE_DIRS}
   )
 
-  target_link_libraries(gvplugin_poppler PRIVATE
+  target_link_libraries(gvplugin_poppler PUBLIC
     gvc
     ${PANGOCAIRO_LINK_LIBRARIES}
-    ${POPPLER_LIBRARIES}
+    ${POPPLER_LINK_LIBRARIES}
   )
 
   if(BUILD_SHARED_LIBS)
