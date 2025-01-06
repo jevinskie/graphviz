@@ -8,6 +8,7 @@ noinst_HEADERS = \
   gv_ctype.h \
   gv_fopen.h \
   gv_math.h \
+  list.h \
   overflow.h \
   prisize_t.h \
   sort.h \
