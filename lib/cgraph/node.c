@@ -83,6 +83,7 @@ static Agnode_t *newnode(Agraph_t * g, IDTYPE id, uint64_t seq)
     /* nodeattr_init and method_init will be called later, from the
      * subgraph where the node was actually created, but first it has
      * to be installed in all the (sub)graphs up to root. */
+    fprintf(stderr, "newnode g: %p id: 0x%llx seq: %llu n: %p\n", g, id, seq, n);
     return n;
 }
 

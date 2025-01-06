@@ -190,6 +190,7 @@ void fast_node(graph_t * g, Agnode_t * n)
 
 void delete_fast_node(graph_t * g, node_t * n)
 {
+    fprintf(stderr, "delete_fast_node: g: %p n: %p\n", g, n);
     assert(find_fast_node(g, n));
     if (ND_next(n))
 	ND_prev(ND_next(n)) = ND_prev(n);
@@ -240,6 +241,7 @@ static char *NAME(node_t * n)
     return buf;
 }
 
+void fastgr(graph_t * g);
 void fastgr(graph_t * g)
 {
     int i, j;
@@ -247,9 +249,9 @@ void fastgr(graph_t * g)
     edge_t *e, *f;
 
     for (n = GD_nlist(g); n; n = ND_next(n)) {
-	fprintf(stderr, "%s %d: (", NAME(n), ND_rank(n));
+	fprintf(stderr, "fastgr: %s %d: (", NAME(n), ND_rank(n));
 	for (i = 0; (e = ND_out(n).list[i]); i++) {
-	    fprintf(stderr, " %s:%d", NAME(aghead(e)), ED_count(e));
+	    fprintf(stderr, "fastgr: %s:%d", NAME(aghead(e)), ED_count(e));
 	    w = aghead(e);
 	    if (g == agroot(g)) {
 		for (j = 0; (f = ND_in(w).list[j]); j++)
@@ -260,7 +262,7 @@ void fastgr(graph_t * g)
 	}
 	fprintf(stderr, " ) (");
 	for (i = 0; (e = ND_in(n).list[i]); i++) {
-	    fprintf(stderr, " %s:%d", NAME(agtail(e)), ED_count(e));
+	    fprintf(stderr, "fastgr: %s:%d", NAME(agtail(e)), ED_count(e));
 	    w = agtail(e);
 	    if (g == agroot(g)) {
 		for (j = 0; (f = ND_out(w).list[j]); j++)

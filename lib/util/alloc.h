@@ -34,6 +34,10 @@ static inline void *gv_calloc(size_t nmemb, size_t size) {
   }
 
   void *p = calloc(nmemb, size);
+  fprintf(stderr, "gv_calloc(%zu, %zu) = %p\n", nmemb, size, p);
+  if (((uintptr_t)p) == 0x10e934390) {
+    __builtin_debugtrap();
+  }
   if (nmemb > 0 && size > 0 && p == NULL) {
     fprintf(stderr,
             "out of memory when trying to allocate %" PRISIZE_T " bytes\n",

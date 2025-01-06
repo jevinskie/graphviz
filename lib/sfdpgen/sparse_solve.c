@@ -18,7 +18,7 @@
 #include <common/globals.h>
 #include <util/alloc.h>
 
-/* #define DEBUG_PRINT */
+#define DEBUG_PRINT
 
 static double *diag_precon(const double *diag, double *x, double *y) {
   int i, m;
